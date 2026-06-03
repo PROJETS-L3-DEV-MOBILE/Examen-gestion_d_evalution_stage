@@ -33,20 +33,22 @@
                                 <td><?= htmlspecialchars($s['ecole'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($s['filiere'] ?? '') ?></td>
                                 <td class="text-end text-nowrap">
-                                    <a href="index.php?controller=stagiaire&action=show&id=<?= $s['numero_stagiaire'] ?>"
-                                       class="btn btn-sm btn-outline-secondary me-1" title="Voir">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="index.php?controller=stagiaire&action=edit&id=<?= $s['numero_stagiaire'] ?>"
-                                       class="btn btn-sm btn-outline-primary me-1" title="Modifier">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="index.php?controller=stagiaire&action=delete&id=<?= $s['numero_stagiaire'] ?>"
-                                       class="btn btn-sm btn-outline-danger"
-                                       title="Supprimer"
-                                       onclick="return confirm('Supprimer ce stagiaire ?')">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
+                                    <div class="dropdown-menu-container">
+                                        <button class="dropdown-menu-trigger" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu-content">
+                                            <li><a href="index.php?controller=stagiaire&action=show&id=<?= $s['numero_stagiaire'] ?>" class="dropdown-menu-item">
+                                                <i class="bi bi-eye"></i> Voir
+                                            </a></li>
+                                            <li><a href="index.php?controller=stagiaire&action=edit&id=<?= $s['numero_stagiaire'] ?>" class="dropdown-menu-item">
+                                                <i class="bi bi-pencil"></i> Modifier
+                                            </a></li>
+                                            <li><a href="index.php?controller=stagiaire&action=delete&id=<?= $s['numero_stagiaire'] ?>" class="dropdown-menu-item danger" data-confirm="Supprimer ce stagiaire ?">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </a></li>
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -51,24 +51,25 @@
                                     </span>
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <a href="index.php?controller=evaluation&action=saisie&stage=<?= $s['numero_stage'] ?>"
-                                       class="btn btn-sm btn-outline-info me-1" title="Evaluer">
-                                        <i class="bi bi-pencil-square"></i>
-                                    </a>
-                                    <a href="index.php?controller=evaluation&action=fiche&stage=<?= $s['numero_stage'] ?>"
-                                       class="btn btn-sm btn-outline-secondary me-1" title="Fiche">
-                                        <i class="bi bi-clipboard-data"></i>
-                                    </a>
-                                    <a href="index.php?controller=stage&action=edit&id=<?= $s['numero_stage'] ?>"
-                                       class="btn btn-sm btn-outline-primary me-1" title="Modifier">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="index.php?controller=stage&action=delete&id=<?= $s['numero_stage'] ?>"
-                                       class="btn btn-sm btn-outline-danger"
-                                       title="Supprimer"
-                                       onclick="return confirm('Supprimer ce stage et toutes ses evaluations ?')">
-                                        <i class="bi bi-trash"></i>
-                                    </a>
+                                    <div class="dropdown-menu-container">
+                                        <button class="dropdown-menu-trigger" title="Actions">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu-content">
+                                            <li><a href="index.php?controller=evaluation&action=saisie&stage=<?= $s['numero_stage'] ?>" class="dropdown-menu-item">
+                                                <i class="bi bi-pencil-square"></i> Evaluer
+                                            </a></li>
+                                            <li><a href="index.php?controller=evaluation&action=fiche&stage=<?= $s['numero_stage'] ?>" class="dropdown-menu-item">
+                                                <i class="bi bi-clipboard-data"></i> Fiche
+                                            </a></li>
+                                            <li><a href="index.php?controller=stage&action=edit&id=<?= $s['numero_stage'] ?>" class="dropdown-menu-item">
+                                                <i class="bi bi-pencil"></i> Modifier
+                                            </a></li>
+                                            <li><a href="index.php?controller=stage&action=delete&id=<?= $s['numero_stage'] ?>" class="dropdown-menu-item danger" data-confirm="Supprimer ce stage et toutes ses evaluations ?">
+                                                <i class="bi bi-trash"></i> Supprimer
+                                            </a></li>
+                                        </ul>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
