@@ -118,7 +118,7 @@ class CritereController extends Controller
         $this->redirect('index.php?controller=critere&action=index');
     }
 
-    private function getPostData(): array
+    protected function getPostData(): array
     {
         return [
             'libelle_critere' => trim($_POST['libelle_critere'] ?? ''),
@@ -126,7 +126,7 @@ class CritereController extends Controller
         ];
     }
 
-    private function validate(array $data): array
+    protected function validate(array $data): array
     {
         $errors = [];
         if (empty($data['libelle_critere'])) {

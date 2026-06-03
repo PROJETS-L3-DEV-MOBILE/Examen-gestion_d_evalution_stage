@@ -99,7 +99,7 @@ class EntrepriseController extends Controller
         $this->redirect('index.php?controller=entreprise&action=index');
     }
 
-    private function getPostData(): array
+    protected function getPostData(): array
     {
         return [
             'nom'              => trim($_POST['nom']              ?? ''),
@@ -108,7 +108,7 @@ class EntrepriseController extends Controller
         ];
     }
 
-    private function validate(array $data): array
+    protected function validate(array $data): array
     {
         $errors = [];
         if (empty($data['nom'])) $errors['nom'] = "Le nom de l'entreprise est obligatoire.";

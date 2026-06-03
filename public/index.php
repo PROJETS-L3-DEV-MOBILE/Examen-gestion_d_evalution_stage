@@ -1,18 +1,19 @@
 <?php
 /**
  * Point d'entrée unique de l'application (Front Controller)
- * Toutes les requêtes passent par ce fichier via .htaccess
+ * Toutes les requêtes sont routées vers ce fichier via .htaccess
  */
 
-// Définir le chemin racine absolu du projet (dossier parent de /public)
 define('ROOT_PATH', dirname(__DIR__));
+define('APP',  ROOT_PATH . '/app');
+define('CORE', ROOT_PATH . '/core');
 
-// Charger les configurations
+require_once CORE . '/Database.php';
+require_once CORE . '/Model.php';
+require_once CORE . '/Controller.php';
+require_once CORE . '/Router.php';
 require_once ROOT_PATH . '/config/app.php';
 require_once ROOT_PATH . '/config/database.php';
 
-// Charger l'autoloader (charge automatiquement les classes)
-require_once ROOT_PATH . '/core/autoload.php';
-
-// Démarrer le routeur
-Router::dispatch();
+$router = new Router();
+$router->dispatch();

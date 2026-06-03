@@ -136,7 +136,7 @@ class StagiaireController extends Controller
     }
 
     /** Extrait et nettoie les données du formulaire POST. */
-    private function getPostData(): array
+    protected function getPostData(): array
     {
         return [
             'nom'     => trim($_POST['nom']     ?? ''),
@@ -148,7 +148,7 @@ class StagiaireController extends Controller
     }
 
     /** Valide les données du stagiaire. Retourne un tableau d'erreurs. */
-    private function validate(array $data): array
+    protected function validate(array $data): array
     {
         $errors = [];
         if (empty($data['nom']))    $errors['nom']    = "Le nom est obligatoire.";

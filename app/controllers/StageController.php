@@ -159,7 +159,7 @@ class StageController extends Controller
         ]);
     }
 
-    private function getPostData(): array
+    protected function getPostData(): array
     {
         return [
             'sujet'             => trim($_POST['sujet']             ?? ''),
@@ -172,7 +172,7 @@ class StageController extends Controller
         ];
     }
 
-    private function validate(array $data): array
+    protected function validate(array $data): array
     {
         $errors = [];
         if (empty($data['sujet']))              $errors['sujet']             = "Le sujet est obligatoire.";
