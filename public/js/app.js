@@ -1,7 +1,3 @@
-/**
- * Scripts JavaScript de l'application GestStage.
- */
-
 document.addEventListener('DOMContentLoaded', function () {
 
     // Validation cote client : dateDebut < dateFin
@@ -42,4 +38,10 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
+    // Animation d'entree des lignes du tableau
+    document.querySelectorAll('tbody tr').forEach(function (row, i) {
+        row.style.animationDelay = (i * 40) + 'ms';
+        row.classList.add('row-fade-in');
+    });
 });
