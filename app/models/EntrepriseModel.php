@@ -7,7 +7,7 @@
 
 class EntrepriseModel extends Model
 {
-    private string $table = 'entreprise';
+    protected string $table = 'entreprise';
 
     /**
      * Récupère toutes les entreprises, triées par nom.

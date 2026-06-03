@@ -8,7 +8,7 @@
 
 class CritereModel extends Model
 {
-    private string $table = 'critere_evaluation';
+    protected string $table = 'critere_evaluation';
 
     /**
      * Récupère tous les critères d'évaluation.

@@ -9,7 +9,7 @@
 class StagiaireModel extends Model
 {
     // Nom de la table en base de données
-    private string $table = 'stagiaire';
+    protected string $table = 'stagiaire';
 
     /**
      * Récupère tous les stagiaires.

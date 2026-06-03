@@ -10,7 +10,7 @@
 
 class StageModel extends Model
 {
-    private string $table = 'stage';
+    protected string $table = 'stage';
 
     /**
      * Récupère tous les stages avec infos du stagiaire et de l'entreprise (JOIN).

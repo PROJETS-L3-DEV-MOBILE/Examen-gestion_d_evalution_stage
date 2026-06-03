@@ -14,7 +14,7 @@
 
 class EvaluationModel extends Model
 {
-    private string $table = 'evaluation';
+    protected string $table = 'evaluation';
 
     /**
      * Récupère toutes les évaluations d'un stage avec le libellé et coefficient du critère.
