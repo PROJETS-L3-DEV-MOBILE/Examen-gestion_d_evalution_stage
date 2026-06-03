@@ -1,48 +1,42 @@
 <?php
 /**
- * Classe Database — Singleton PDO
- *
- * Fournit une connexion unique à la base de données
- * via le pattern Singleton.
+ * Classe Database – Singleton PDO.
+ * Fournit une instance unique de connexion à MySQL.
  */
-
 class Database
 {
     private static ?Database $instance = null;
     private PDO $pdo;
 
-    /**
-     * Constructeur privé : empêche l'instanciation directe.
-     */
     private function __construct()
     {
-        $dsn = "mysql:host=" . DB_HOST
-             . ";port=" . DB_PORT
-             . ";dbname=" . DB_NAME
-             . ";charset=" . DB_CHARSET;
+        $config = require ROOT . '/config/database.php';
+        $dsn = sprintf(
+            'mysql:host=%s;dbname=%s;charset=%s',
+            $config['host'],
+            $config['dbname'],
+            $config['charset']
+        );
 
-        $options = [
+        $this->pdo = new PDO($dsn, $config['username'], $config['password'], [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
-        ];
-
-        try {
-            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
-        } catch (PDOException $e) {
-            die("Erreur de connexion à la base de données : " . $e->getMessage());
-        }
+        ]);
     }
 
-    public static function getInstance(): Database
+    // Empêche le clonage du singleton
+    private function __clone() {}
+
+    public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new Database();
+            self::$instance = new self();
         }
         return self::$instance;
     }
 
-    public function getPdo(): PDO
+    public function getConnection(): PDO
     {
         return $this->pdo;
     }

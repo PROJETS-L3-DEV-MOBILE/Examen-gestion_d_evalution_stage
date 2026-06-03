@@ -1,134 +1,148 @@
-# Projet 5 — Gestion d'Évaluation de Stage (GE-IT)
+# Gestion des Evaluations de Stage
+
+Application web de gestion des evaluations de stages etudiants.
+Architecture MVC en PHP pur avec PDO et MySQL.
+
+---
 
 ## Membres du groupe
-- [Nom Prénom 1] — N° étudiant
-- [Nom Prénom 2] — N° étudiant
-- [Nom Prénom 3] — N° étudiant
+
+| N° | Nom complet                  |
+|----|------------------------------|
+| 1  | RAKOTO Jean                  |
+| 2  | RABE Marie                   |
+
+*(Remplacer par les vrais noms complets)*
 
 ---
 
-## Structure MVC
+## Fonctionnalites
 
-```
-gestion-stage/
-├── public/                  ← Dossier web (DocumentRoot)
-│   ├── index.php            ← Point d'entrée unique
-│   ├── .htaccess            ← Réécriture d'URL
-│   └── css/
-│       └── style.css
-├── config/
-│   ├── app.php              ← BASE_URL, APP_NAME, timezone
-│   └── database.php         ← Identifiants BDD
-├── core/                    ← Classes du framework maison
-│   ├── autoload.php
-│   ├── Database.php         ← Singleton PDO
-│   ├── Router.php
-│   ├── Controller.php       ← Classe abstraite
-│   └── Model.php            ← Classe abstraite
-├── app/
-│   ├── controllers/
-│   │   ├── HomeController.php
-│   │   ├── StagiaireController.php
-│   │   ├── EntrepriseController.php
-│   │   ├── StageController.php
-│   │   ├── CritereController.php
-│   │   └── EvaluationController.php
-│   ├── models/
-│   │   ├── StagiaireModel.php
-│   │   ├── EntrepriseModel.php
-│   │   ├── StageModel.php
-│   │   ├── CritereModel.php
-│   │   └── EvaluationModel.php
-│   └── views/
-│       ├── layouts/main.php ← Layout commun (sidebar + topbar)
-│       ├── home/
-│       ├── stagiaires/
-│       ├── entreprises/
-│       ├── stages/
-│       ├── criteres/
-│       ├── evaluations/
-│       └── pdf/             ← Template HTML pour mPDF
-└── database/
-    └── database.sql         ← Script de création + données de test
-```
+- Gestion des stagiaires (CRUD)
+- Gestion des entreprises (CRUD)
+- Gestion des criteres d'evaluation (CRUD)
+- Attribution d'un stage (stagiaire + entreprise + sujet + dates)
+- Saisie et modification des evaluations par critere
+- Recalcul automatique de la note finale apres chaque modification
+- Classement des stagiaires par note finale decroissante
+- Fiche d'evaluation individuelle (affichage + impression / export PDF navigateur)
 
 ---
 
-## Installation
+## Regles de gestion implementees
 
-### 1. Prérequis
+- Un stagiaire ne peut avoir qu'un seul stage actif a la fois
+- dateDebut doit etre strictement anterieure a dateFin (controle front et back)
+- Un coefficient ne peut pas etre negatif
+- Une note est validee entre 0 et le bareme du stage (10 ou 20)
+- Impossible de calculer la note finale si la somme des coefficients est nulle
+- Note finale = somme(note x coefficient) / somme(coefficients)
+
+---
+
+## Prerequis
+
 - PHP >= 8.0
-- MySQL ou MariaDB
-- Apache avec `mod_rewrite` activé
+- MySQL >= 5.7 ou MariaDB >= 10.3
+- Serveur Apache (XAMPP / LAMPP recommande)
+- Extension PDO et PDO_MySQL activees
 
-### 2. Cloner le projet
+---
 
-```bash
-git clone <URL_DU_REPO> gestion-stage
+## Instructions d'installation
+
+### 1. Placer le projet dans le dossier web
+
+```
+/opt/lampp/htdocs/examen/Examen-gestion_d_evalution_stage/   (Linux LAMPP)
+C:\xampp\htdocs\examen\Examen-gestion_d_evalution_stage\      (Windows XAMPP)
 ```
 
-### 3. Configurer la base de données
+### 2. Creer la base de donnees
+
+Ouvrir phpMyAdmin (`http://localhost/phpmyadmin`) ou utiliser le terminal :
 
 ```bash
-mysql -u root -p < database/database.sql
+mysql -u root -p < database.sql
 ```
 
-### 4. Configurer l'application
+Ou copier-coller le contenu de `database.sql` dans l'onglet SQL de phpMyAdmin.
 
-Modifier `config/database.php` :
+### 3. Configurer la connexion
+
+Editer le fichier `config/database.php` :
+
 ```php
-define('DB_USER', 'root');    // votre utilisateur MySQL
-define('DB_PASS', '');        // votre mot de passe MySQL
+return [
+    'host'     => 'localhost',   // Hote MySQL
+    'dbname'   => 'gestion_stages',
+    'username' => 'root',        // Utilisateur MySQL
+    'password' => '',            // Mot de passe (vide par defaut sous XAMPP/LAMPP)
+    'charset'  => 'utf8mb4',
+];
 ```
 
-Modifier `config/app.php` si nécessaire :
-```php
-define('BASE_URL', 'http://localhost/gestion-stage/public');
-```
-
-### 5. Configurer Apache (Virtual Host ou XAMPP)
-
-Pointer le `DocumentRoot` vers le dossier `public/`, ou
-placer le projet dans `htdocs/` de XAMPP et accéder via :
+### 4. Acceder a l'application
 
 ```
-http://localhost/gestion-stage/public/
-```
-
-### 6. Activer mod_rewrite (si nécessaire)
-
-Dans `httpd.conf` ou `.htaccess` du vhost :
-```
-AllowOverride All
+http://localhost/examen/Examen-gestion_d_evalution_stage/
 ```
 
 ---
 
-## Accès par défaut
+## Acces par defaut
 
-Aucune authentification requise.
-URL d'accueil : `http://localhost/gestion-stage/public/`
+L'application n'implemente pas de systeme d'authentification (hors perimetre du projet).
+Elle est directement accessible via le navigateur.
+
+Donnees de demonstration inserees par `database.sql` :
+- 3 stagiaires
+- 3 entreprises
+- 5 criteres d'evaluation pre-configures
 
 ---
 
-## Génération PDF
+## Structure du projet
 
-La génération PDF utilise **mPDF**. Pour l'activer :
-
-```bash
-composer require mpdf/mpdf
+```
+Examen-gestion_d_evalution_stage/
+├── index.php              Point d'entree unique (front controller)
+├── database.sql           Schema SQL + donnees d'exemple
+├── config/
+│   └── database.php       Configuration de la base de donnees
+├── core/
+│   ├── Database.php       Singleton PDO
+│   ├── Model.php          Classe mere des modeles
+│   ├── Controller.php     Classe mere des controleurs
+│   └── Router.php         Routeur (GET controller + action)
+├── app/
+│   ├── controllers/       StagiaireController, EntrepriseController, etc.
+│   ├── models/            Stagiaire, Entreprise, Stage, CritereEvaluation, Evaluation
+│   └── views/
+│       ├── layouts/       header.php + footer.php (Bootstrap 5)
+│       ├── home/          Tableau de bord
+│       ├── stagiaires/    Liste, formulaire, detail
+│       ├── entreprises/   Liste, formulaire
+│       ├── criteres/      Liste, formulaire
+│       ├── stages/        Liste, formulaire, detail
+│       └── evaluations/   Saisie, fiche, classement, impression
+└── public/
+    ├── css/style.css
+    └── js/app.js
 ```
 
 ---
 
-## Fonctionnalités
+## Navigation des routes
 
-- ✅ CRUD Stagiaires
-- ✅ CRUD Entreprises
-- ✅ CRUD Critères d'évaluation
-- ✅ Attribution de stage (avec contrôle dateDebut < dateFin)
-- ✅ Évaluations par critère (note 0–20)
-- ✅ Calcul automatique de la note finale pondérée
-- ✅ Classement des stagiaires par note décroissante
-- ✅ Fiche d'évaluation individuelle
-- ✅ Génération PDF (avec mPDF)
+| URL                                          | Description                  |
+|----------------------------------------------|------------------------------|
+| `index.php`                                  | Tableau de bord              |
+| `index.php?controller=stagiaire&action=index`| Liste des stagiaires         |
+| `index.php?controller=entreprise&action=index`| Liste des entreprises       |
+| `index.php?controller=critere&action=index`  | Liste des criteres           |
+| `index.php?controller=stage&action=index`    | Liste des stages             |
+| `index.php?controller=evaluation&action=saisie&stage=ID` | Saisie des notes |
+| `index.php?controller=evaluation&action=fiche&stage=ID`  | Fiche individuelle |
+| `index.php?controller=evaluation&action=classement`      | Classement        |
+| `index.php?controller=evaluation&action=imprimer&stage=ID` | Impression PDF  |

@@ -1,55 +1,69 @@
 <?php
 /**
- * Classe Controller — Base pour tous les contrôleurs
- *
- * Fournit render(), redirect(), post(), get().
+ * Classe Controller – classe mère abstraite pour tous les contrôleurs.
+ * Fournit le rendu des vues, les redirections et les messages flash.
  */
-
 abstract class Controller
 {
     /**
-     * Affiche une vue dans le layout principal.
+     * Inclut la vue avec ses données après avoir rendu l'en-tête et le pied de page.
      *
-     * @param string $view  Chemin relatif depuis /app/views (ex: 'stagiaires/index')
-     * @param array  $data  Variables injectées dans la vue
-     * @param string $title Titre de la page
+     * @param string $view  Chemin relatif de la vue sans l'extension (ex: 'stagiaires/index')
+     * @param array  $data  Données transmises à la vue via extract()
      */
-    protected function render(string $view, array $data = [], string $title = APP_NAME): void
+    protected function render(string $view, array $data = []): void
     {
         extract($data);
-
-        $viewPath   = VIEWS_PATH . '/' . $view . '.php';
-        $layoutPath = VIEWS_PATH . '/layouts/main.php';
+        $viewPath = APP . '/views/' . $view . '.php';
 
         if (!file_exists($viewPath)) {
-            die("Vue introuvable : $viewPath");
+            throw new RuntimeException("Vue introuvable : {$viewPath}");
         }
 
-        if (!file_exists($layoutPath)) {
-            die("Layout introuvable : $layoutPath");
-        }
-
-        // Buffer la vue pour l'injecter dans le layout via $content
-        ob_start();
+        require APP . '/views/layouts/header.php';
         require $viewPath;
-        $content = ob_get_clean();
-
-        require $layoutPath;
+        require APP . '/views/layouts/footer.php';
     }
 
+    /**
+     * Rend une vue sans le layout (utilisé pour l'impression / PDF).
+     */
+    protected function renderRaw(string $view, array $data = []): void
+    {
+        extract($data);
+        $viewPath = APP . '/views/' . $view . '.php';
+
+        if (!file_exists($viewPath)) {
+            throw new RuntimeException("Vue introuvable : {$viewPath}");
+        }
+
+        require $viewPath;
+    }
+
+    /** Redirige vers une URL. */
     protected function redirect(string $url): void
     {
-        header("Location: $url");
+        header("Location: {$url}");
         exit;
     }
 
-    protected function post(string $key, mixed $default = null): mixed
+    /** Enregistre un message flash en session. */
+    protected function setFlash(string $type, string $message): void
     {
-        return isset($_POST[$key]) ? trim($_POST[$key]) : $default;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['flash'] = ['type' => $type, 'message' => $message];
     }
 
-    protected function get(string $key, mixed $default = null): mixed
+    /** Récupère et supprime le message flash courant. */
+    protected function getFlash(): ?array
     {
-        return isset($_GET[$key]) ? trim($_GET[$key]) : $default;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $flash = $_SESSION['flash'] ?? null;
+        unset($_SESSION['flash']);
+        return $flash;
     }
 }

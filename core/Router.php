@@ -1,48 +1,54 @@
 <?php
 /**
- * Classe Router — Routeur central de l'application
- *
- * Analyse l'URL et dispatch vers le bon contrôleur/action.
- * Format : ?controller=nom&action=methode&id=x
+ * Classe Router – aiguille les requêtes vers le bon contrôleur et la bonne action.
+ * La route est déterminée par les paramètres GET 'controller' et 'action'.
  */
-
 class Router
 {
-    public static function dispatch(): void
+    private array $controllerMap = [
+        'home'        => 'HomeController',
+        'stagiaire'   => 'StagiaireController',
+        'entreprise'  => 'EntrepriseController',
+        'critere'     => 'CritereController',
+        'stage'       => 'StageController',
+        'evaluation'  => 'EvaluationController',
+    ];
+
+    public function dispatch(): void
     {
-        $controllerName = $_GET['controller'] ?? 'home';
-        $action         = $_GET['action']     ?? 'index';
-
-        // Ex: 'stagiaire' → 'StagiaireController'
-        $className = ucfirst($controllerName) . 'Controller';
-        $filePath  = ROOT_PATH . '/app/controllers/' . $className . '.php';
-
-        if (!file_exists($filePath)) {
-            self::notFound("Contrôleur '$className' introuvable.");
-            return;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        require_once $filePath;
+        $controllerKey = strtolower(trim($_GET['controller'] ?? 'home'));
+        $action        = preg_replace('/[^a-zA-Z0-9_]/', '', $_GET['action'] ?? 'index');
 
-        if (!class_exists($className)) {
-            self::notFound("Classe '$className' non définie.");
-            return;
+        // Repli sur la page d'accueil si le contrôleur est inconnu
+        if (!isset($this->controllerMap[$controllerKey])) {
+            $controllerKey = 'home';
+            $action        = 'index';
         }
 
-        $controller = new $className();
+        $controllerClass = $this->controllerMap[$controllerKey];
+        $controllerFile  = APP . '/controllers/' . $controllerClass . '.php';
+
+        if (!file_exists($controllerFile)) {
+            throw new RuntimeException("Contrôleur introuvable : {$controllerClass}");
+        }
+
+        // Chargement de tous les modèles
+        foreach (glob(APP . '/models/*.php') as $modelFile) {
+            require_once $modelFile;
+        }
+
+        require_once $controllerFile;
+
+        $controller = new $controllerClass();
 
         if (!method_exists($controller, $action)) {
-            self::notFound("Action '$action' introuvable dans '$className'.");
-            return;
+            throw new RuntimeException("Action introuvable : {$action} dans {$controllerClass}");
         }
 
         $controller->$action();
-    }
-
-    private static function notFound(string $message): void
-    {
-        http_response_code(404);
-        echo "<h1>404 — Page introuvable</h1><p>$message</p>";
-        echo "<a href='" . BASE_URL . "'>Retour à l'accueil</a>";
     }
 }

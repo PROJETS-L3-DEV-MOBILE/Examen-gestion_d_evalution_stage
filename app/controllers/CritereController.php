@@ -1,103 +1,140 @@
 <?php
 /**
- * Contrôleur CritereEvaluation - CRUD des critères
+ * Contrôleur CritereController – CRUD des critères d'évaluation.
  */
-
 class CritereController extends Controller
 {
-    private CritereModel $model;
+    private CritereEvaluation $model;
 
     public function __construct()
     {
-        $this->model = new CritereModel();
+        $this->model = new CritereEvaluation();
     }
 
     public function index(): void
     {
-        $criteres = $this->model->getAll();
-        $this->render('criteres/index', ['criteres' => $criteres], 'Critères d\'évaluation');
+        $criteres = $this->model->findAll();
+        $this->render('criteres/index', [
+            'criteres' => $criteres,
+            'flash'    => $this->getFlash(),
+        ]);
     }
 
     public function create(): void
     {
-        $this->render('criteres/form', ['critere' => null, 'errors' => []], 'Nouveau critère');
+        $this->render('criteres/form', [
+            'critere' => null,
+            'action'  => 'store',
+            'errors'  => [],
+        ]);
     }
 
     public function store(): void
     {
-        $data   = $this->collectFormData();
+        $data   = $this->getPostData();
         $errors = $this->validate($data);
 
         if (!empty($errors)) {
-            $this->render('criteres/form', ['critere' => $data, 'errors' => $errors], 'Nouveau critère');
+            $this->render('criteres/form', [
+                'critere' => $data,
+                'action'  => 'store',
+                'errors'  => $errors,
+            ]);
             return;
         }
 
         try {
             $this->model->create($data);
-            $this->redirect(BASE_URL . '?controller=critere&action=index');
+            $this->setFlash('success', "Critère créé avec succès.");
+            $this->redirect('index.php?controller=critere&action=index');
         } catch (InvalidArgumentException $e) {
-            $this->render('criteres/form', ['critere' => $data, 'errors' => [$e->getMessage()]], 'Nouveau critère');
+            $errors['coefficient'] = $e->getMessage();
+            $this->render('criteres/form', [
+                'critere' => $data,
+                'action'  => 'store',
+                'errors'  => $errors,
+            ]);
         }
     }
 
     public function edit(): void
     {
-        $id      = (int) $this->get('id');
-        $critere = $this->model->getById($id);
+        $id      = (int) ($_GET['id'] ?? 0);
+        $critere = $this->model->findById($id);
 
         if (!$critere) {
-            $this->redirect(BASE_URL . '?controller=critere&action=index');
+            $this->setFlash('error', "Critère introuvable.");
+            $this->redirect('index.php?controller=critere&action=index');
             return;
         }
 
-        $this->render('criteres/form', ['critere' => $critere, 'errors' => []], 'Modifier le critère');
+        $this->render('criteres/form', [
+            'critere' => $critere,
+            'action'  => 'update',
+            'errors'  => [],
+        ]);
     }
 
     public function update(): void
     {
-        $id     = (int) $this->post('id');
-        $data   = $this->collectFormData();
+        $id     = (int) ($_POST['id'] ?? 0);
+        $data   = $this->getPostData();
         $errors = $this->validate($data);
 
         if (!empty($errors)) {
             $data['id_critere'] = $id;
-            $this->render('criteres/form', ['critere' => $data, 'errors' => $errors], 'Modifier le critère');
+            $this->render('criteres/form', [
+                'critere' => $data,
+                'action'  => 'update',
+                'errors'  => $errors,
+            ]);
             return;
         }
 
         try {
             $this->model->update($id, $data);
-            $this->redirect(BASE_URL . '?controller=critere&action=index');
+            $this->setFlash('success', "Critère mis à jour avec succès.");
+            $this->redirect('index.php?controller=critere&action=index');
         } catch (InvalidArgumentException $e) {
-            $data['id_critere'] = $id;
-            $this->render('criteres/form', ['critere' => $data, 'errors' => [$e->getMessage()]], 'Modifier le critère');
+            $errors['coefficient'] = $e->getMessage();
+            $data['id_critere']    = $id;
+            $this->render('criteres/form', [
+                'critere' => $data,
+                'action'  => 'update',
+                'errors'  => $errors,
+            ]);
         }
     }
 
     public function delete(): void
     {
-        $id = (int) $this->get('id');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id = (int) ($_GET['id'] ?? 0);
+        try {
             $this->model->delete($id);
+            $this->setFlash('success', "Critère supprimé.");
+        } catch (Exception $e) {
+            $this->setFlash('error', "Impossible de supprimer ce critère : des évaluations y font référence.");
         }
-        $this->redirect(BASE_URL . '?controller=critere&action=index');
+        $this->redirect('index.php?controller=critere&action=index');
     }
 
-    private function collectFormData(): array
+    private function getPostData(): array
     {
         return [
-            'libelle_critere' => $this->post('libelle_critere', ''),
-            'coefficient'     => $this->post('coefficient', 0),
+            'libelle_critere' => trim($_POST['libelle_critere'] ?? ''),
+            'coefficient'     => $_POST['coefficient'] ?? '0',
         ];
     }
 
     private function validate(array $data): array
     {
         $errors = [];
-        if (empty($data['libelle_critere']))    $errors[] = "Le libellé est obligatoire.";
-        if (!is_numeric($data['coefficient']))  $errors[] = "Le coefficient doit être un nombre.";
-        if ((float)$data['coefficient'] < 0)    $errors[] = "Le coefficient ne peut pas être négatif.";
+        if (empty($data['libelle_critere'])) {
+            $errors['libelle_critere'] = "Le libellé du critère est obligatoire.";
+        }
+        if (!is_numeric($data['coefficient']) || (float) $data['coefficient'] < 0) {
+            $errors['coefficient'] = "Le coefficient doit être un nombre positif ou nul.";
+        }
         return $errors;
     }
 }

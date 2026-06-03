@@ -1,160 +1,189 @@
 <?php
 /**
- * Contrôleur Stage
- * 
- * Gère l'attribution des stages (stagiaire → entreprise)
- * avec validation des règles métier.
+ * Contrôleur StageController – attribution et gestion des stages.
  */
-
 class StageController extends Controller
 {
-    private StageModel      $model;
-    private StagiaireModel  $stagiaireModel;
-    private EntrepriseModel $entrepriseModel;
+    private Stage       $model;
+    private Stagiaire   $stagiaireModel;
+    private Entreprise  $entrepriseModel;
 
     public function __construct()
     {
-        $this->model           = new StageModel();
-        $this->stagiaireModel  = new StagiaireModel();
-        $this->entrepriseModel = new EntrepriseModel();
+        $this->model           = new Stage();
+        $this->stagiaireModel  = new Stagiaire();
+        $this->entrepriseModel = new Entreprise();
     }
 
     public function index(): void
     {
-        $stages = $this->model->getAll();
-        $this->render('stages/index', ['stages' => $stages], 'Stages');
+        $stages = $this->model->findAllWithDetails();
+        $this->render('stages/index', [
+            'stages' => $stages,
+            'flash'  => $this->getFlash(),
+        ]);
     }
 
+    /** Formulaire d'attribution d'un nouveau stage. */
     public function create(): void
     {
-        // Passe les listes de stagiaires et entreprises pour les menus déroulants
         $this->render('stages/form', [
             'stage'       => null,
-            'stagiaires'  => $this->stagiaireModel->getAll(),
-            'entreprises' => $this->entrepriseModel->getAll(),
+            'action'      => 'store',
+            'stagiaires'  => $this->stagiaireModel->findAll(),
+            'entreprises' => $this->entrepriseModel->findAll(),
             'errors'      => [],
-        ], 'Attribuer un stage');
+        ]);
     }
 
     public function store(): void
     {
-        $data   = $this->collectFormData();
+        $data   = $this->getPostData();
         $errors = $this->validate($data);
 
         if (!empty($errors)) {
             $this->render('stages/form', [
                 'stage'       => $data,
-                'stagiaires'  => $this->stagiaireModel->getAll(),
-                'entreprises' => $this->entrepriseModel->getAll(),
+                'action'      => 'store',
+                'stagiaires'  => $this->stagiaireModel->findAll(),
+                'entreprises' => $this->entrepriseModel->findAll(),
                 'errors'      => $errors,
-            ], 'Attribuer un stage');
+            ]);
             return;
         }
 
         try {
             $this->model->create($data);
-            $this->redirect(BASE_URL . '?controller=stage&action=index');
-        } catch (InvalidArgumentException $e) {
+            $this->setFlash('success', "Stage attribué avec succès.");
+            $this->redirect('index.php?controller=stage&action=index');
+        } catch (Exception $e) {
+            $errors['general'] = $e->getMessage();
             $this->render('stages/form', [
                 'stage'       => $data,
-                'stagiaires'  => $this->stagiaireModel->getAll(),
-                'entreprises' => $this->entrepriseModel->getAll(),
-                'errors'      => [$e->getMessage()],
-            ], 'Attribuer un stage');
+                'action'      => 'store',
+                'stagiaires'  => $this->stagiaireModel->findAll(),
+                'entreprises' => $this->entrepriseModel->findAll(),
+                'errors'      => $errors,
+            ]);
         }
     }
 
     public function edit(): void
     {
-        $id    = (int) $this->get('id');
-        $stage = $this->model->getById($id);
+        $id    = (int) ($_GET['id'] ?? 0);
+        $stage = $this->model->findById($id);
 
         if (!$stage) {
-            $this->redirect(BASE_URL . '?controller=stage&action=index');
+            $this->setFlash('error', "Stage introuvable.");
+            $this->redirect('index.php?controller=stage&action=index');
             return;
         }
 
         $this->render('stages/form', [
             'stage'       => $stage,
-            'stagiaires'  => $this->stagiaireModel->getAll(),
-            'entreprises' => $this->entrepriseModel->getAll(),
+            'action'      => 'update',
+            'stagiaires'  => $this->stagiaireModel->findAll(),
+            'entreprises' => $this->entrepriseModel->findAll(),
             'errors'      => [],
-        ], 'Modifier le stage');
+        ]);
     }
 
     public function update(): void
     {
-        $id     = (int) $this->post('id');
-        $data   = $this->collectFormData();
+        $id     = (int) ($_POST['id'] ?? 0);
+        $data   = $this->getPostData();
         $errors = $this->validate($data);
 
         if (!empty($errors)) {
             $data['numero_stage'] = $id;
             $this->render('stages/form', [
                 'stage'       => $data,
-                'stagiaires'  => $this->stagiaireModel->getAll(),
-                'entreprises' => $this->entrepriseModel->getAll(),
+                'action'      => 'update',
+                'stagiaires'  => $this->stagiaireModel->findAll(),
+                'entreprises' => $this->entrepriseModel->findAll(),
                 'errors'      => $errors,
-            ], 'Modifier le stage');
+            ]);
             return;
         }
 
         try {
             $this->model->update($id, $data);
-            $this->redirect(BASE_URL . '?controller=stage&action=index');
-        } catch (InvalidArgumentException $e) {
+            $this->setFlash('success', "Stage mis à jour avec succès.");
+            $this->redirect('index.php?controller=stage&action=index');
+        } catch (Exception $e) {
+            $errors['general']    = $e->getMessage();
             $data['numero_stage'] = $id;
             $this->render('stages/form', [
                 'stage'       => $data,
-                'stagiaires'  => $this->stagiaireModel->getAll(),
-                'entreprises' => $this->entrepriseModel->getAll(),
-                'errors'      => [$e->getMessage()],
-            ], 'Modifier le stage');
+                'action'      => 'update',
+                'stagiaires'  => $this->stagiaireModel->findAll(),
+                'entreprises' => $this->entrepriseModel->findAll(),
+                'errors'      => $errors,
+            ]);
         }
     }
 
     public function delete(): void
     {
-        $id = (int) $this->get('id');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $id = (int) ($_GET['id'] ?? 0);
+        try {
             $this->model->delete($id);
+            $this->setFlash('success', "Stage supprimé.");
+        } catch (Exception $e) {
+            $this->setFlash('error', "Impossible de supprimer ce stage.");
         }
-        $this->redirect(BASE_URL . '?controller=stage&action=index');
+        $this->redirect('index.php?controller=stage&action=index');
     }
 
-    private function collectFormData(): array
+    /** Affiche les détails d'un stage. */
+    public function show(): void
+    {
+        $id    = (int) ($_GET['id'] ?? 0);
+        $stage = $this->model->findByIdWithDetails($id);
+
+        if (!$stage) {
+            $this->setFlash('error', "Stage introuvable.");
+            $this->redirect('index.php?controller=stage&action=index');
+            return;
+        }
+
+        $evalModel   = new Evaluation();
+        $evaluations = $evalModel->findByStage($id);
+        $noteFinale  = $this->model->getNoteFinale($id);
+
+        $this->render('stages/show', [
+            'stage'       => $stage,
+            'evaluations' => $evaluations,
+            'note_finale' => $noteFinale,
+            'flash'       => $this->getFlash(),
+        ]);
+    }
+
+    private function getPostData(): array
     {
         return [
-            'sujet'             => $this->post('sujet', ''),
-            'dateDebut'         => $this->post('dateDebut', ''),
-            'dateFin'           => $this->post('dateFin', ''),
-            'numero_stagiaire'  => (int) $this->post('numero_stagiaire', 0),
-            'numero_entreprise' => (int) $this->post('numero_entreprise', 0),
+            'sujet'             => trim($_POST['sujet']             ?? ''),
+            'dateDebut'         => trim($_POST['dateDebut']         ?? ''),
+            'dateFin'           => trim($_POST['dateFin']           ?? ''),
+            'bareme'            => (int) ($_POST['bareme']          ?? 20),
+            'statut'            => trim($_POST['statut']            ?? 'actif'),
+            'numero_stagiaire'  => (int) ($_POST['numero_stagiaire']  ?? 0),
+            'numero_entreprise' => (int) ($_POST['numero_entreprise'] ?? 0),
         ];
     }
 
     private function validate(array $data): array
     {
         $errors = [];
+        if (empty($data['sujet']))              $errors['sujet']             = "Le sujet est obligatoire.";
+        if (empty($data['dateDebut']))          $errors['dateDebut']         = "La date de début est obligatoire.";
+        if (empty($data['dateFin']))            $errors['dateFin']           = "La date de fin est obligatoire.";
+        if (empty($data['numero_stagiaire']))   $errors['numero_stagiaire']  = "Veuillez sélectionner un stagiaire.";
+        if (empty($data['numero_entreprise']))  $errors['numero_entreprise'] = "Veuillez sélectionner une entreprise.";
 
-        if (empty($data['sujet']))             $errors[] = "Le sujet du stage est obligatoire.";
-        if (empty($data['dateDebut']))         $errors[] = "La date de début est obligatoire.";
-        if (empty($data['dateFin']))           $errors[] = "La date de fin est obligatoire.";
-        if ($data['numero_stagiaire'] <= 0)    $errors[] = "Veuillez sélectionner un stagiaire.";
-        if ($data['numero_entreprise'] <= 0)   $errors[] = "Veuillez sélectionner une entreprise.";
-
-        // Vérification de la cohérence des dates
         if (!empty($data['dateDebut']) && !empty($data['dateFin'])) {
-            if ($data['dateDebut'] >= $data['dateFin']) {
-                $errors[] = "La date de début doit être antérieure à la date de fin.";
-            }
-        }
-
-        // Vérification du conflit de stage (un seul stage actif à la fois)
-        if (empty($errors) && $data['numero_stagiaire'] > 0) {
-            $excludeId = isset($_POST['id']) ? (int)$_POST['id'] : null;
-            if ($this->model->hasConflict($data['numero_stagiaire'], $data['dateDebut'], $data['dateFin'], $excludeId)) {
-                $errors[] = "Ce stagiaire a déjà un stage sur cette période. Un seul stage actif à la fois.";
+            if (strtotime($data['dateDebut']) >= strtotime($data['dateFin'])) {
+                $errors['dateFin'] = "La date de fin doit être postérieure à la date de début.";
             }
         }
 
